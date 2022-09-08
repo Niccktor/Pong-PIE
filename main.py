@@ -1,11 +1,30 @@
+import time
 import pygame
 import sys
 import random
+import pyfirmata
+import threading
 
 # pyfirmata pour faire le lien entre Arduino et python
 # https://pyfirmata.readthedocs.io/en/latest/
 # https://arduinofactory.fr/pyfirmata/
+def EXIT():
+    global kill_thread
+    pygame.quit()
+    kill_thread = True
+    x.join(timeout=5)
+    sys.exit()
 
+# Besoin de thread pour ne pas influencer sur le jeu
+def Arduino_thread():
+    for i in range(10):
+        if kill_thread:
+            break
+        LED_pin.write(HIGH)
+        time.sleep(2)
+        LED_pin.write(LOW)
+        time.sleep(2)
+    arduino.exit()
 
 def event_handler():
     global player_1_speed
@@ -17,8 +36,7 @@ def event_handler():
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
-                pygame.quit()
-                sys.exit()
+                EXIT()
             if event.key == pygame.K_UP:
                 player_1_speed = -7
             if event.key == pygame.K_DOWN:
@@ -89,16 +107,46 @@ def ball_restart():
         clock.tick(60)
 
 def render():
+    # Fill background
     screen.fill(background_color)
 
+    # Affichage Score
+    score_2_img = font.render(str(score_2), True, pygame.Color('green'))
+    score_1_img = font.render(str(score_1), True, pygame.Color('red'))
     screen.blit(score_1_img, ((width_screen / 4 * 3) - score_1_img.get_width() / 2, 20))
     screen.blit(score_2_img, (width_screen / 4 - score_2_img.get_width() / 2, 20))
 
+    # Affichage Joueurs 1 et 2
     pygame.draw.rect(screen, player_1_color, player_1)
     pygame.draw.rect(screen, player_2_color, player_2)
+
+    # Affichage milieu terrain
     pygame.draw.aaline(screen, line_color, [width_screen/2, 0], [width_screen/2, height_screen])
     pygame.draw.ellipse(screen, ball_color, ball)
+
+    # Update screen
     pygame.display.flip()
+
+# Gérer l'Arduino
+port = 'COM6'
+HIGH = True
+LOW = False
+kill_thread = False
+arduino = pyfirmata.Arduino(port)
+LED_pin = arduino.get_pin('d:8:o')
+x = threading.Thread(target=Arduino_thread)
+x.start()
+
+"""
+#https://github.com/tino/pyFirmata/pull/45/files/c476236847cd8bb655c0fb645a1ce69b28d0e2d2
+ECHO_pin = arduino.get_pin('d:7:o')
+TRIG_pin = arduino.get_pin('d:8:i')
+
+TRIG_pin.write(HIGH)
+time.sleep(20/1000)
+TRIG_pin.write(LOW)
+dist = ECHO_pin.ping()
+"""
 
 # Générer la fenêtre
 pygame.init()
@@ -110,11 +158,12 @@ pygame.display.set_caption("PIE 2022 Pong")
 background_color = pygame.Color('grey43')
 
 
-# Text
+
+# Style du text
 font = pygame.font.SysFont(None, 400)
 
 
-# Sound Effect
+# Sound Effect load
 paddle_sound = pygame.mixer.Sound(r'Sound\paddle.wav')
 wall_sound = pygame.mixer.Sound(r'sound\wall.wav')
 score_sound = pygame.mixer.Sound(r'sound\score.wav')
@@ -144,14 +193,13 @@ score_2 = 0
 
 # line
 line_color = pygame.Color('grey12')
-
+time.sleep(2)
 while True:
     # Keyboard event
     event_handler()
 
     # Animation
-    score_2_img = font.render(str(score_2), True, pygame.Color('green'))
-    score_1_img = font.render(str(score_1), True, pygame.Color('red'))
+
     ball_movement()
     player_movement()
 
