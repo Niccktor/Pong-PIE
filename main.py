@@ -1,8 +1,11 @@
-import time
-
 import pygame
 import sys
 import random
+
+# pyfirmata pour faire le lien entre Arduino et python
+# https://pyfirmata.readthedocs.io/en/latest/
+# https://arduinofactory.fr/pyfirmata/
+
 
 def event_handler():
     global player_1_speed
@@ -100,8 +103,8 @@ def render():
 # Générer la fenêtre
 pygame.init()
 clock = pygame.time.Clock()
-width_screen = 1920
-height_screen = 1080
+width_screen = 1245
+height_screen = 934
 screen = pygame.display.set_mode((width_screen, height_screen))
 pygame.display.set_caption("PIE 2022 Pong")
 background_color = pygame.Color('grey43')
