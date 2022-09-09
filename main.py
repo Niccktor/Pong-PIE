@@ -8,6 +8,12 @@ import sys
 # pyfirmata pour faire le lien entre Arduino et python
 # https://pyfirmata.readthedocs.io/en/latest/
 # https://arduinofactory.fr/pyfirmata/
+
+def num_len(str):
+    i = 0
+    while str[i] >= '0' and str[i] <= '9':
+        i +=1
+    return i
 def EXIT():
     global kill_thread
     pygame.quit()
@@ -18,28 +24,49 @@ def EXIT():
 # Besoin de thread pour ne pas influencer sur le jeu
 
 def Arduino_thread():
-    global player_1_speed
-    i = 0
-    value = 0
-    old_value = 0
+    global moyenne
+    global moyenne2
+    moyenne2 = 0
+    moyenne = 0
+    value1 = 0
+    i1 = 0
+
+    value2 = 0
+    i2 = 0
     while True :
-        """value = int(arduino.readline())
-        print(value)"""
-
-        if i < 50:
-            value += int(arduino.readline())
-            i += 1
-        else:
-            value /= 50
-            i = 0
-            print(value)
-        if old_value > value:
-            player_1_speed = 7
-        else:
-            player_1_speed = -7
-
         if kill_thread:
             break
+        payload = arduino.readline().decode('UTF-8')
+        if payload.startswith('a'):
+            payload = payload[1:]
+            payload = payload[0:num_len(payload)]
+            value1 += int(payload)
+            #print(payload)
+            i1 += 1
+            if (value1 > 400):
+                value1 = moyenne
+            if i1 > 4:
+                value1 = value1 / 4
+                moyenne = value1
+                value1 = 0
+                i1 = 0
+                #print(moyenne)
+        elif payload.startswith('b'):
+            payload = payload[1:]
+            payload = payload[0:num_len(payload)]
+            value2 += int(payload)
+            i2 += 1
+            if (value2 > 400):
+                value2 = moyenne2
+            if i2 > 4:
+                value2 = value2 / 4
+                moyenne2 = value2
+                value2 = 0
+                i2 = 0
+                #print(moyenne2)
+
+
+
 
 
 
@@ -98,8 +125,13 @@ def ball_movement():
         print("Ball speed x : ", ball_speed_x, "ball speed y : ", ball_speed_y)
 
 def player_movement():
-    player_2.y += player_2_speed
-    player_1.y += player_1_speed
+    #player_2.y += player_2_speed
+    #player_1.y += player_1_speed
+
+    if moyenne > 10 and moyenne < 100:
+        player_1.y = (height_screen / 60) * (moyenne - 30)
+    if moyenne2 > 10 and moyenne2 < 100:
+        player_2.y = (height_screen / 60) * (moyenne2 - 30)
 
     if player_1.top <= 0:
         player_1.top = 0
@@ -147,7 +179,7 @@ def render():
 
 
 kill_thread = False
-arduino = serial.Serial('COM9', 9600)
+arduino = serial.Serial('COM7', 9600)
 x = threading.Thread(target=Arduino_thread)
 x.start()
 
@@ -190,11 +222,8 @@ screen = pygame.display.set_mode((width_screen, height_screen))
 pygame.display.set_caption("PIE 2022 Pong")
 background_color = pygame.Color('grey43')
 
-
-
 # Style du text
 font = pygame.font.SysFont(None, 400)
-
 
 # Sound Effect load
 paddle_sound = pygame.mixer.Sound(r'Sound\paddle.wav')
@@ -228,6 +257,7 @@ score_2 = 0
 line_color = pygame.Color('grey12')
 time.sleep(2)
 while True:
+
     # Keyboard event
     event_handler()
 
