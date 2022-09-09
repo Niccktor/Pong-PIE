@@ -1,9 +1,9 @@
 import time
 import pygame
-import sys
 import random
-import pyfirmata
+import serial
 import threading
+import sys
 
 # pyfirmata pour faire le lien entre Arduino et python
 # https://pyfirmata.readthedocs.io/en/latest/
@@ -16,15 +16,32 @@ def EXIT():
     sys.exit()
 
 # Besoin de thread pour ne pas influencer sur le jeu
+
 def Arduino_thread():
-    for i in range(10):
+    global player_1_speed
+    i = 0
+    value = 0
+    old_value = 0
+    while True :
+        """value = int(arduino.readline())
+        print(value)"""
+
+        if i < 50:
+            value += int(arduino.readline())
+            i += 1
+        else:
+            value /= 50
+            i = 0
+            print(value)
+        if old_value > value:
+            player_1_speed = 7
+        else:
+            player_1_speed = -7
+
         if kill_thread:
             break
-        LED_pin.write(HIGH)
-        time.sleep(2)
-        LED_pin.write(LOW)
-        time.sleep(2)
-    arduino.exit()
+
+
 
 def event_handler():
     global player_1_speed
@@ -33,6 +50,8 @@ def event_handler():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
+            arduino.exit()
+            x.join()
             sys.exit()
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
@@ -41,13 +60,13 @@ def event_handler():
                 player_1_speed = -7
             if event.key == pygame.K_DOWN:
                 player_1_speed = 7
-            if event.key == pygame.K_w:
+            if event.key == pygame.K_z:
                 player_2_speed = -7
             if event.key == pygame.K_s:
                 player_2_speed = 7
         if event.type == pygame.KEYUP:
-            if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
-                player_1_speed = 0
+#            if event.key == pygame.K_UP or event.key == pygame.K_DOWN:
+#               player_1_speed = 0
             if event.key == pygame.K_w or event.key == pygame.K_s:
                 player_2_speed = 0
 
@@ -67,7 +86,6 @@ def ball_movement():
             la_chatte.play(0)
         else:
             score_sound.play(0)
-
         if ball.left <= 0:
             score_1 += 1
         else:
@@ -127,16 +145,31 @@ def render():
     # Update screen
     pygame.display.flip()
 
-# Gérer l'Arduino
-port = 'COM6'
+
+kill_thread = False
+arduino = serial.Serial('COM9', 9600)
+x = threading.Thread(target=Arduino_thread)
+x.start()
+
+
+
+"""
+arduino = PyMata("COM9")
+arduino.sonar_config(8, 7)
+data = arduino.get_sonar_data()
+"""
+"""
+port = 'COM9'
 HIGH = True
 LOW = False
 kill_thread = False
 arduino = pyfirmata.Arduino(port)
-LED_pin = arduino.get_pin('d:8:o')
+ECHO_pin = arduino.get_pin('d:7:i')
+TRIG_pin = arduino.get_pin('d:8:o')
+# LED_pin = arduino.get_pin('d:8:o')
 x = threading.Thread(target=Arduino_thread)
 x.start()
-
+"""
 """
 #https://github.com/tino/pyFirmata/pull/45/files/c476236847cd8bb655c0fb645a1ce69b28d0e2d2
 ECHO_pin = arduino.get_pin('d:7:o')
@@ -199,8 +232,8 @@ while True:
     event_handler()
 
     # Animation
-
-    ball_movement()
+    if True :
+        ball_movement()
     player_movement()
 
     # Visuals
