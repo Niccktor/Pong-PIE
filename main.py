@@ -77,7 +77,7 @@ def event_handler():
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
-            arduino.exit()
+            arduino.close()
             x.join()
             sys.exit()
         if event.type == pygame.KEYDOWN:
