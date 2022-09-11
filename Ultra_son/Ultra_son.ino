@@ -30,7 +30,7 @@ void loop() {
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
   // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration = pulseIn(echoPin, HIGH);
+  duration = pulseIn(echoPin, HIGH, 7000);
   // Calculating the distance
   distance = duration * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
   // Displays the distance on the Serial Monitor
@@ -44,7 +44,7 @@ void loop() {
   delayMicroseconds(10);
   digitalWrite(trigPin2, LOW);
   // Reads the echoPin, returns the sound wave travel time in microseconds
-  duration2 = pulseIn(echoPin2, HIGH);
+  duration2 = pulseIn(echoPin2, HIGH, 7000);
   // Calculating the distance
   distance2 = duration2 * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
   // Displays the distance on the Serial Monitor
