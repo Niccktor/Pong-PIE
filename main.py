@@ -6,6 +6,8 @@ import threading
 import sys
 import pygame_menu
 
+#
+
 
 # pyfirmata pour faire le lien entre Arduino et python
 # https://pyfirmata.readthedocs.io/en/latest/
@@ -120,7 +122,10 @@ def init_ball():
 
 def start_game():
     global play
+    global game_fini
+
     play = True
+    game_fini = False
     init_player()
     init_opponent()
     init_ball()
@@ -216,14 +221,14 @@ def draw_option_menu():
     option_menu.add.button('Player :', None)
     option_menu.add.selector('Color : ', [('green', 1, 1), ('blue', 1, 7), ('darkblue', 1, 0), ('lawngreen', 1, 3),
                                           ('orange', 1, 4), ('yellow', 1, 5), ('red', 1, 6)], onchange=set_color)
-    option_menu.add.button('Top value : ' + str(player_min_value), set_possition, 'PLAYER', 'TOP')
-    option_menu.add.button('Bottom value : ' + str(player_max_value), set_possition, 'PLAYER', 'BOTTOM')
+    option_menu.add.button('Bottom value : ' + str(player_min_value), set_possition, 'PLAYER', 'TOP')
+    option_menu.add.button('Top value : ' + str(player_max_value), set_possition, 'PLAYER', 'BOTTOM')
     option_menu.add.button('', None)
     option_menu.add.button('Opponent :', None)
     option_menu.add.selector('Difficulty :', [('Easy', 1), ('Meduim', 2), ('Hard', 3)], onchange=set_difficulty)
     option_menu.add.selector('Color : ', [('red', 2, 6), ('blue', 2, 7), ('darkblue', 2, 0), ('green', 2, 1), ('lawngreen', 2, 3), ('orange', 2, 4), ('yellow', 2, 5)], onchange=set_color)
-    option_menu.add.button('Top value : ' + str(opponent_min_value), set_possition, 'OPPONENT', 'TOP')
-    option_menu.add.button('Bottom value : ' + str(opponent_max_value), set_possition, 'OPPONENT', 'BOTTOM')
+    option_menu.add.button('Bottom value : ' + str(opponent_min_value), set_possition, 'OPPONENT', 'TOP')
+    option_menu.add.button('Top value : ' + str(opponent_max_value), set_possition, 'OPPONENT', 'BOTTOM')
     option_menu.add.button('Retour', draw_menu)
     option_menu.mainloop(screen)
 
@@ -281,6 +286,7 @@ def ball_movement():
     global score_1
     global opponenet_score
     global ball_get_hit
+    global game_fini
 
     ball.x += ball_speed_x
     ball.y += ball_speed_y
@@ -294,8 +300,15 @@ def ball_movement():
             score_sound.play(0)
         if ball.left <= 0:
             opponenet_score += 1
+            if (opponenet_score >= 7):
+                game_fini = True
+
         else:
             score_1 += 1
+            if score_1 >= 7:
+                game_fini = True
+
+
         ball_restart()
     if (ball.colliderect(opponent) or ball.colliderect(player)) and ball_get_hit == False:
         ball_get_hit = True
@@ -348,11 +361,12 @@ def render():
     screen.fill(background_color)
 
     # Affichage Score
-    opponenet_score_img = font.render(str(opponenet_score), True, pygame.Color(opponent_color))
-    score_1_img = font.render(str(score_1), True, pygame.Color(player_color))
+    if game_fini == False:
+        opponenet_score_img = font.render(str(opponenet_score), True, pygame.Color(opponent_color))
+        score_1_img = font.render(str(score_1), True, pygame.Color(player_color))
 
-    screen.blit(opponenet_score_img, ((width_screen / 4 * 3) - opponenet_score_img.get_width() / 2, 20))
-    screen.blit(score_1_img, (width_screen / 4 - score_1_img.get_width() / 2, 20))
+        screen.blit(opponenet_score_img, ((width_screen / 4 * 3) - opponenet_score_img.get_width() / 2, 20))
+        screen.blit(score_1_img, (width_screen / 4 - score_1_img.get_width() / 2, 20))
 
     # Affichage Joueurs 1 et 2
     pygame.draw.rect(screen, player_color, player)
@@ -361,16 +375,25 @@ def render():
     # Affichage milieu terrain
     pygame.draw.aaline(screen, line_color, [width_screen / 2, 0], [width_screen / 2, height_screen])
     pygame.draw.ellipse(screen, ball_color, ball)
+    if game_fini:
+        if opponenet_score > score_1:
+            result = font2.render('Opponent  Victory', True, pygame.Color(opponent_color))
+        else:
+            result = font2.render('Player Victory', True, pygame.Color(opponent_color))
+        screen.blit(result, (width_screen  / 2 - result.get_width() / 2, (height_screen / 4 - result.get_height() / 2)))
 
     # Update screen
     pygame.display.flip()
 
 
-kill_thread = False
-arduino = serial.Serial('COM7', 9600)
-thread = threading.Thread(target=arduino_thread)
-thread.start()
-
+try :
+    kill_thread = False
+    arduino = serial.Serial('COM9', 9600)
+    thread = threading.Thread(target=arduino_thread)
+    thread.start()
+except :
+    print('Arduino probelme')
+    sys.exit()
 """
 arduino = PyMata("COM9")
 arduino.sonar_config(8, 7)
@@ -403,16 +426,18 @@ screen = pygame.display.set_mode((width_screen, height_screen))
 pygame.display.set_caption("PIE 2022 Pong")
 background_color = pygame.Color('grey43')
 play = False
+game_fini = False
 
 # Initialisation  des menus
 option_menu = pygame_menu.Menu('Options', width_screen, height_screen, theme=pygame_menu.themes.THEME_DARK)
-menu = pygame_menu.Menu('Welcom on Weepong', width_screen, height_screen, theme=pygame_menu.themes.THEME_DARK)
+menu = pygame_menu.Menu('Welcome on Wiipong', width_screen, height_screen, theme=pygame_menu.themes.THEME_DARK)
 
 # Init gamemode
 game_mode = 1
 
 # Style du text
 font = pygame.font.SysFont(None, 400)
+font2 = pygame.font.SysFont(None, 100)
 
 # Sound Effect load
 paddle_sound = pygame.mixer.Sound(r'Sound\paddle.wav')
@@ -440,7 +465,8 @@ while True:
     # Animation
     if play:
         event_handler()
-        ball_movement()
+        if game_fini == False:
+            ball_movement()
         player_movement()
         render()
     else:
