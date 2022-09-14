@@ -13,10 +13,10 @@ Le jeu de pong est réaliser en Python a l'aide des library:
   pySerial https://pythonhosted.org/pyserial/
 
 Projet réalisé avec :
-  BOUHMIDI Rayane
-  CHENDEA Anton
-  OUSTAD Mehdy
-  BEGUIN Thomas
+ BOUHMIDI Rayane
+ CHENDEA Anton
+ OUSTAD Mehdy
+ BEGUIN Thomas
 Sous l'encadrement de Mohamed KEDIM <3
 
 À l'aide de ce projet, nous avons pu découvrir l'école et les ressources qui sont à notre disposition.
