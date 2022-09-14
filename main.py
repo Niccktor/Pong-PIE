@@ -294,18 +294,15 @@ def ball_movement():
         ball_speed_y *= -1
         wall_sound.play(0)
     if ball.left <= 0 or ball.right >= width_screen:
-        if random.randint(1, 100) != 100:
-            la_chatte.play(0)
-        else:
-            score_sound.play(0)
+        score_sound.play(0)
         if ball.left <= 0:
             opponenet_score += 1
-            if (opponenet_score >= 7):
+            if (opponenet_score >= 5):
                 game_fini = True
 
         else:
             score_1 += 1
-            if score_1 >= 7:
+            if score_1 >= 5:
                 game_fini = True
 
 
@@ -379,7 +376,7 @@ def render():
         if opponenet_score > score_1:
             result = font2.render('Opponent  Victory', True, pygame.Color(opponent_color))
         else:
-            result = font2.render('Player Victory', True, pygame.Color(opponent_color))
+            result = font2.render('Player Victory', True, pygame.Color(player_color_selected))
         screen.blit(result, (width_screen  / 2 - result.get_width() / 2, (height_screen / 4 - result.get_height() / 2)))
 
     # Update screen
